@@ -1,0 +1,62 @@
+name: Draft release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build release downloads
+    runs-on: macos-15
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    steps:
+      - name: Check out source
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Verify release tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          . scripts/version.sh
+          test "$RELEASE_TAG" = "v$release_version"
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+      - name: Check Go formatting, tests and static analysis
+        working-directory: cli
+        run: |
+          test -z "$(gofmt -l cmd internal)"
+          go test ./...
+          go vet ./...
+      - name: Test Swift without hardware
+        run: sh scripts/test-swift.sh
+      - name: Build app and CLI
+        run: |
+          sh scripts/build.sh
+          sh scripts/build-cli.sh
+      - name: Package downloads
+        run: sh scripts/package-release.sh
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" dist/*.zip dist/SHA256SUMS.txt \
+            --verify-tag --draft --title "Keeb Clock ${RELEASE_TAG#v}" \
+            --notes-file build/release-notes.md
