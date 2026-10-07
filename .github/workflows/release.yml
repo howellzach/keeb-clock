@@ -13,12 +13,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Build release downloads
+  macos:
+    name: Build macOS downloads
     runs-on: macos-15
     timeout-minutes: 30
-    permissions:
-      contents: write
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
     steps:
@@ -51,6 +49,125 @@ jobs:
           sh scripts/build-cli.sh
       - name: Package downloads
         run: sh scripts/package-release.sh
+      - name: Upload macOS archives
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: macos-release
+          path: |
+            dist/*.zip
+            build/release-notes.md
+          if-no-files-found: error
+          retention-days: 1
+
+  linux:
+    name: Build Linux CLI (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: x86_64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    env:
+      CGO_ENABLED: "1"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Verify release tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          . scripts/version.sh
+          test "$RELEASE_TAG" = "v$release_version"
+      - name: Install HID build dependencies
+        run: sudo apt-get update && sudo apt-get install -y file libudev-dev zip
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+      - name: Check Go formatting, tests and static analysis
+        working-directory: cli
+        run: |
+          test -z "$(gofmt -l cmd internal)"
+          go test ./...
+          go vet ./...
+      - name: Build and package Linux CLI
+        run: |
+          sh scripts/build-cli.sh
+          sh scripts/package-cli-archive.sh build/keeb-clock linux "${{ matrix.arch }}"
+      - name: Upload Linux CLI archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: linux-cli-${{ matrix.arch }}
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  macos-intel:
+    name: Build Intel macOS CLI
+    runs-on: macos-15-intel
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      CGO_ENABLED: "1"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Verify release tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          . scripts/version.sh
+          test "$RELEASE_TAG" = "v$release_version"
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+      - name: Check Go formatting, tests and static analysis
+        working-directory: cli
+        run: |
+          test -z "$(gofmt -l cmd internal)"
+          go test ./...
+          go vet ./...
+      - name: Build and package Intel CLI
+        run: |
+          sh scripts/build-cli.sh
+          sh scripts/package-cli-archive.sh build/keeb-clock macos x86_64
+      - name: Upload Intel macOS CLI archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: macos-cli-x86_64
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Draft GitHub release
+    needs: [macos, macos-intel, linux]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Download release archives
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: artifacts
+      - name: Assemble archives and checksums
+        run: sh scripts/assemble-release.sh artifacts
       - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}

@@ -13,10 +13,9 @@ test "$(./build/keeb-clock --version)" = "keeb-clock $release_version (build $re
 codesign --verify --strict build/keeb-clock
 staging=$(mktemp -d "$PWD/build/release-package.XXXXXX")
 trap 'rm -rf "$staging"' EXIT HUP INT TERM
-mkdir -p dist "$staging/app" "$staging/cli"
+mkdir -p dist "$staging/app"
 ditto --norsrc --noextattr "$app" "$staging/app/Keeb Clock.app"
 cp LICENSE THIRD_PARTY_NOTICES.md "$staging/app/"
-cp build/keeb-clock LICENSE THIRD_PARTY_NOTICES.md "$staging/cli/"
 cat > "$staging/app/INSTALL.txt" <<'TEXT'
 Move Keeb Clock.app to Applications and open it.
 Connect a CIDOO ABM066 over USB, then use the clock-keycap menu bar icon.
@@ -24,28 +23,21 @@ Requires macOS 13 or later. Only tested on Apple Silicon.
 This build is ad-hoc signed and is not notarized. macOS may block its first launch.
 Unofficial project. Not affiliated with or endorsed by CIDOO.
 TEXT
-cat > "$staging/cli/INSTALL.txt" <<'TEXT'
-Run ./keeb-clock devices to list connected keyboards.
-Run ./keeb-clock sync-time to update the clock; add --utc for UTC.
-Requires macOS and a CIDOO ABM066 connected over USB.
-Only tested on Apple Silicon. This build is ad-hoc signed and not notarized.
-Unofficial project. Not affiliated with or endorsed by CIDOO.
-TEXT
 app_archive="KeebClock-$release_version-macos-universal.zip"
-cli_archive="keeb-clock-$release_version-macos-$architecture.zip"
 ditto -c -k --norsrc --noextattr "$staging/app" "dist/$app_archive"
-ditto -c -k --norsrc --noextattr "$staging/cli" "dist/$cli_archive"
+sh scripts/package-cli-archive.sh build/keeb-clock macos "$architecture"
+cli_archive="keeb-clock-$release_version-macos-$architecture.zip"
 (cd dist && shasum -a 256 "$app_archive" "$cli_archive" > SHA256SUMS.txt)
 cat > build/release-notes.md <<TEXT
 Keeb Clock $release_version (build $release_build)
 
 - Menu bar app: Apple Silicon and Intel build; only tested on Apple Silicon.
-- CLI: macOS $architecture build.
+- CLI: macOS Apple Silicon, macOS Intel, Linux x86_64, and Linux arm64.
 - Connect a CIDOO ABM066 over USB. Bluetooth syncing is not supported.
-- These builds are ad-hoc signed and are **not notarized**. macOS may block first launch.
+- macOS builds are ad-hoc signed and are **not notarized**. macOS may block first launch.
 
 Unzip the app download, move Keeb Clock.app into Applications, then open it.
-The CLI archive includes usage instructions. Both archives include licence notices.
+Each CLI archive includes usage instructions. All archives include licence notices.
 Use SHA256SUMS.txt to check downloaded archive checksums.
 
 Unofficial project. Not affiliated with or endorsed by CIDOO.

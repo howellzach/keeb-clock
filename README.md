@@ -59,7 +59,7 @@ sh scripts/build-cli.sh
 Use `sync-time --utc` for UTC or `sync-time --dry-run` to read the configuration
 without updating the clock. Use `--help` for more options.
 
-The CLI builds for the machine you compile it on and works independently of the app.
+The CLI builds for the machine you compile it on and works independently of the macOS app.
 See the [CLI README](cli/README.md) for its experimental image helpers.
 
 ## Troubleshooting
@@ -74,8 +74,8 @@ version and whether your Mac uses Apple Silicon or Intel.
 
 Update the version and build number in `Config/Version.xcconfig`, then push a
 matching version tag such as `v1.1`. The release workflow runs tests and creates
-a draft GitHub Release with the app ZIP, a CLI ZIP for the build Mac's architecture,
-and checksums. Test the downloads and review the notes before publishing the draft.
+a draft GitHub Release with the app ZIP, CLI ZIPs for macOS (Apple Silicon and Intel)
+and Linux (x86_64 and arm64), and checksums. Test the downloads and review the notes before publishing the draft.
 
 ## Licence
 
