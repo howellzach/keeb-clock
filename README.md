@@ -21,7 +21,25 @@ manual updates.
 
 *Menu preview with sample sync data.*
 
-To build and install, you need Xcode 16 or later with Swift 6. From the project root:
+### Install from a release
+
+1. Open the [Releases page](https://github.com/howellzach/keeb-clock/releases) and
+   download `KeebClock-<version>-macos-universal.zip` from the release assets.
+2. Unzip it and drag **Keeb Clock.app** into **Applications**.
+3. Connect your keyboard over USB and open **Keeb Clock** from Applications.
+   It runs in the menu bar, without a Dock icon or a main window.
+
+Release downloads do not require Xcode or Go. To update, quit the app and replace
+it in Applications with the newer version.
+
+These builds are locally signed and **not notarized**. If macOS blocks the app
+because the developer cannot be verified, and you trust the download, attempt to
+open it, then go to **System Settings → Privacy & Security → Open Anyway**.
+See [Apple’s guidance](https://support.apple.com/102445) for details.
+
+### Build from source
+
+You need Xcode 16 or later with Swift 6. From the project root:
 
 ```sh
 sh scripts/build.sh
@@ -42,10 +60,27 @@ Connection status updates when the keyboard is plugged in or removed.
 Reconnecting syncs the clock when automatic syncing is enabled.
 
 Once installed, the app runs on its own without Xcode or the CLI.
-The installer keeps a backup of the previous app when updating.
-Builds are locally signed; notarized downloads are not yet available.
+The source-build installer keeps a backup of the previous app when updating.
 
 ## Command-line tool
+
+### Install from a release
+
+Download the CLI ZIP from the [Releases page](https://github.com/howellzach/keeb-clock/releases)
+and unzip it. Choose `macos-arm64` for Apple Silicon or `macos-x86_64` for Intel,
+if that architecture is available in the release.
+
+In Terminal, change to the extracted folder and run:
+
+```sh
+./keeb-clock devices
+./keeb-clock sync-time
+```
+
+Go is not required to run the downloaded CLI. These downloads are also locally
+signed and not notarized; the macOS approval guidance above applies.
+
+### Build from source
 
 The CLI runs on macOS and Linux. To build it, you need Go 1.24 or later.
 Linux builds also need a C compiler and libudev headers. From the project root:
