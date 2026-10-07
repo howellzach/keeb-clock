@@ -2,13 +2,15 @@ package device
 
 import (
 	"fmt"
-	"golang.org/x/sys/unix"
 	"os"
+	"path/filepath"
+
+	"golang.org/x/sys/unix"
 )
 
-// Both CLI and app use this lock; a second process never interleaves HID reports.
+// AcquireClockLock stops another CLI process from interleaving HID reports.
 func AcquireClockLock() (func(), error) {
-	path := fmt.Sprintf("/private/tmp/cidoo-clock-%d.lock", os.Getuid())
+	path := clockLockPath()
 	fd, err := unix.Open(path, unix.O_CREAT|unix.O_RDWR|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0600)
 	if err != nil {
 		return nil, err
@@ -23,4 +25,8 @@ func AcquireClockLock() (func(), error) {
 		return nil, fmt.Errorf("another clock sync is already running")
 	}
 	return func() { unix.Flock(fd, unix.LOCK_UN); unix.Close(fd) }, nil
+}
+
+func clockLockPath() string {
+	return filepath.Join(os.TempDir(), fmt.Sprintf("cidoo-clock-%d.lock", os.Getuid()))
 }

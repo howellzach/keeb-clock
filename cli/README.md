@@ -1,6 +1,7 @@
 # Keeb Clock CLI
 
-A standalone Go tool for syncing the CIDOO ABM066 screen clock over USB on macOS.
+A standalone Go tool for syncing the CIDOO ABM066 screen clock over USB
+on macOS and Linux. The menu bar app is a separate macOS program.
 
 Build from the project root:
 
@@ -14,7 +15,9 @@ sh scripts/build-cli.sh
 Use `sync-time --utc` for UTC. A dry run reads configuration without writing an
 update. Successful updates are verified by reading the clock/configuration back.
 
-The Swift menu bar app works independently. Both tools share a transaction lock.
+Linux builds need a C compiler and libudev headers, such as `build-essential`
+and `libudev-dev` on Debian or Ubuntu. Opening the keyboard also requires
+permission to its hidraw device.
 
 Run tests and checks from this directory:
 
@@ -27,7 +30,7 @@ go vet ./...
 upload images. Put options before an image filename:
 
 ```sh
-../build/keeb-clock convert --out /private/tmp/frame.rgb565 image.png
+../build/keeb-clock convert --out /tmp/frame.rgb565 image.png
 ```
 
 See the [project README](../README.md) for requirements and research credits.

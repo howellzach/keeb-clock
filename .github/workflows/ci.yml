@@ -47,3 +47,30 @@ jobs:
         run: |
           . scripts/version.sh
           test "$(./build/keeb-clock --version)" = "keeb-clock $release_version (build $release_build)"
+
+  linux:
+    name: Go CLI on Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Install HID build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+      - name: Check Go formatting
+        working-directory: cli
+        run: test -z "$(gofmt -l cmd internal)"
+      - name: Test and check Go
+        working-directory: cli
+        run: |
+          go test ./...
+          go vet ./...
+      - name: Build Go CLI
+        run: sh scripts/build-cli.sh

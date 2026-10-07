@@ -47,7 +47,8 @@ Builds are locally signed; notarized downloads are not yet available.
 
 ## Command-line tool
 
-To build the CLI, you need Go 1.24 or later. From the project root:
+The CLI runs on macOS and Linux. To build it, you need Go 1.24 or later.
+Linux builds also need a C compiler and libudev headers. From the project root:
 
 ```sh
 sh scripts/build-cli.sh
@@ -58,7 +59,7 @@ sh scripts/build-cli.sh
 Use `sync-time --utc` for UTC or `sync-time --dry-run` to read the configuration
 without updating the clock. Use `--help` for more options.
 
-The CLI builds for your Mac's architecture and works independently of the app.
+The CLI builds for the machine you compile it on and works independently of the app.
 See the [CLI README](cli/README.md) for its experimental image helpers.
 
 ## Troubleshooting
