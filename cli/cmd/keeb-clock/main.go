@@ -73,7 +73,9 @@ func run(args []string) error {
 
 func rootUsage() string {
 	exe := filepath.Base(os.Args[0])
-	return fmt.Sprintf(`Usage:
+	return fmt.Sprintf(`keeb-clock %s (build %s)
+
+Usage:
   %s devices
   %s convert --out <frame.rgb565> [flags] <image.(png|jpg|jpeg)>
   %s set-image [flags] <image.(png|jpg|jpeg)>
@@ -98,7 +100,7 @@ Flags (sync-time):
   --utc               Use UTC instead of local time
   --verbose           Print extra details
   --json              Machine-readable sync result
-`, exe, exe, exe, exe)
+`, version, buildNumber, exe, exe, exe, exe)
 }
 
 func usageError(msg string) error { return fmt.Errorf("usage:\n%s", msg) }

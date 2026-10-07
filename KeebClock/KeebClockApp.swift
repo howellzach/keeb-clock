@@ -91,6 +91,9 @@ struct ClockMenuView: View {
         Text("Clock sync for CIDOO ABM066")
           .font(.caption)
           .foregroundStyle(.secondary)
+        Text(appVersionLabel)
+          .font(.caption2)
+          .foregroundStyle(.secondary)
 
         Text("Status: \(model.status)")
           .font(.subheadline)
@@ -179,4 +182,10 @@ struct ClockMenuView: View {
       .frame(width: 320)
       .onAppear { login.refresh() }
   }
+}
+
+private var appVersionLabel: String {
+  let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+  let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
+  return "Version \(version) (build \(build))"
 }
